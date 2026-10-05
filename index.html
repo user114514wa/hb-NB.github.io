@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>HB自助插件获取</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0d1b3e 0%, #1a0a2e 100%);
+  overflow-x: hidden; color: #fff;
+}
+#glow {
+  position: fixed; width: 500px; height: 500px;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255,110,199,0.3) 0%, transparent 70%);
+  transform: translate(-50%,-50%); left: 50%; top: 50%;
+  transition: left 0.08s ease-out, top 0.08s ease-out; z-index: 0;
+}
+.container {
+  position: relative; z-index: 1;
+  max-width: 420px; margin: 0 auto; padding: 50px 24px;
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+}
+h1 {
+  font-size: 28px; font-weight: 800; text-align: center;
+  background: linear-gradient(90deg, #00e5ff, #e040fb, #ff6ec7);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 30px; animation: fadeInDown 0.6s ease;
+}
+.avatar-wrap {
+  width: 90px; height: 90px; border-radius: 50%;
+  overflow: hidden; margin-bottom: 16px;
+  border: 3px solid transparent;
+  background: linear-gradient(#1a1a2e,#1a1a2e) padding-box,
+              linear-gradient(135deg,#00e5ff,#e040fb) border-box;
+  opacity: 0; transition: opacity 0.3s;
+}
+.avatar-wrap.show { opacity: 1; }
+.avatar-wrap img { width:100%; height:100%; object-fit:cover; }
+.qq-hint { font-size:13px; color:rgba(255,255,255,0.4); margin-bottom:20px; }
+.card {
+  width: 100%; background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 24px; padding: 28px 22px; animation: fadeInUp 0.5s ease;
+}
+input, textarea {
+  width: 100%; padding: 15px 18px; margin: 6px 0;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 14px; color: #fff; font-size: 15px; outline: none;
+  transition: all 0.3s; font-family: inherit;
+}
+input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.4); }
+input:focus, textarea:focus { border-color:#00e5ff; box-shadow:0 0 20px rgba(0,229,255,0.2); }
+.btn {
+  width: 100%; padding: 15px; margin: 6px 0;
+  border: none; border-radius: 14px; font-size: 16px; font-weight: 600;
+  color: #fff; cursor: pointer; transition: transform 0.15s;
+}
+.btn:active { transform: scale(0.97); }
+.btn-login { background: linear-gradient(135deg,#7c4dff,#448aff); box-shadow:0 4px 20px rgba(124,77,255,0.4); }
+.btn-reg { background: linear-gradient(135deg,#ff6e40,#ab47bc); }
+.btn-logout { background: linear-gradient(135deg,#546e7a,#37474f); }
+.welcome { text-align:center; margin-bottom:20px; }
+.welcome .title { font-size:22px; font-weight:800; }
+.welcome .sub { font-size:14px; color:rgba(255,255,255,0.5); margin-top:6px; }
+.section-title { font-size:17px; font-weight:700; margin:20px 0 10px; align-self:flex-start; }
+.tool {
+  width:100%; background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1); border-radius:16px;
+  padding:16px; margin:8px 0; display:flex; align-items:center; gap:12px;
+}
+.tool-icon { font-size:32px; }
+.tool-info { flex:1; }
+.tool-info .name { font-weight:700; font-size:15px; }
+.tool-info .desc { font-size:12px; color:rgba(255,255,255,0.5); margin-top:2px; }
+.tool .get {
+  padding:10px 18px; border:none; border-radius:12px;
+  background:linear-gradient(135deg,#00e676,#00b0ff);
+  color:#fff; font-weight:700; font-size:14px; cursor:pointer;
+}
+/* Chat */
+.chat-box {
+  width:100%; height:300px; overflow-y:auto;
+  background:rgba(0,0,0,0.25); border-radius:16px;
+  padding:14px; margin:8px 0; border:1px solid rgba(255,255,255,0.08);
+}
+.chat-msg { margin-bottom:12px; animation:fadeInUp 0.3s ease; }
+.chat-msg .meta { font-size:11px; color:rgba(255,255,255,0.4); margin-bottom:3px; }
+.chat-msg .bubble {
+  display:inline-block; padding:10px 14px; border-radius:14px;
+  background:rgba(124,77,255,0.3); font-size:14px; max-width:80%;
+}
+.chat-msg.me { text-align:right; }
+.chat-msg.me .bubble { background:linear-gradient(135deg,#00e5ff,#7c4dff); }
+.chat-input-row { display:flex; gap:8px; align-items:flex-end; }
+.chat-input-row input { flex:1; margin:0; }
+.chat-send {
+  padding:14px 22px; border:none; border-radius:14px;
+  background:linear-gradient(135deg,#00e676,#00b0ff);
+  color:#fff; font-weight:700; cursor:pointer; white-space:nowrap;
+}
+.hidden { display:none !important; }
+#toast {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  background:rgba(0,0,0,0.85); padding:14px 28px; border-radius:12px;
+  font-size:14px; opacity:0; transition:opacity 0.3s; z-index:99; pointer-events:none;
+}
+.chat-box::-webkit-scrollbar { width:4px; }
+.chat-box::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:2px; }
+@keyframes fadeInDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+</style>
+</head>
+<body>
+<div id="glow"></div>
+<div class="container">
+  <h1>HB自助插件获取</h1>
+
+  <!-- Login -->
+  <div class="avatar-wrap" id="loginAvatar">
+    <img id="loginAvatarImg" src="">
+  </div>
+  <div class="qq-hint" id="avatarHint">输入QQ号自动显示头像</div>
+
+  <div class="card" id="loginCard">
+    <input type="text" id="qqInput" placeholder="请输入QQ号" inputmode="numeric">
+    <input type="password" id="pwdInput" placeholder="请输入密码">
+    <button class="btn btn-login" onclick="doLogin()">登 录</button>
+    <button class="btn btn-reg" onclick="doRegister()">注 册</button>
+  </div>
+
+  <!-- Main -->
+  <div id="mainPanel" class="hidden" style="width:100%">
+    <div class="welcome">
+      <div class="avatar-wrap show" style="margin:0 auto 12px">
+        <img id="mainAvatar" src="">
+      </div>
+      <div class="title">欢迎回来</div>
+      <div class="sub" id="qqLabel"></div>
+    </div>
+
+    <div class="section-title">插件下载</div>
+    <div class="tool">
+      <div class="tool-icon">🎮</div>
+      <div class="tool-info">
+        <div class="name">HB插件 v2.1.2</div>
+        <div class="desc">MC悬浮窗外挂菜单 · 150+功能开关</div>
+      </div>
+      <button class="get" onclick="downloadHb()">⬇ 下载</button>
+    </div>
+
+    <div class="section-title">💬 HB聊天频道</div>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" placeholder="说点什么..." maxlength="200">
+      <button class="chat-send" onclick="sendMsg()">发送</button>
+    </div>
+
+    <button class="btn btn-logout" style="margin-top:24px" onclick="doLogout()">退出登录</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+const APK_URL = "https://aka.doubaocdn.com/s/i9aXgKdjZ3";
+let myQQ = "";
+
+// Mouse/touch glow
+document.addEventListener('mousemove', e => {
+  const g = document.getElementById('glow');
+  g.style.left = e.clientX+'px'; g.style.top = e.clientY+'px';
+});
+document.addEventListener('touchmove', e => {
+  const g = document.getElementById('glow');
+  g.style.left = e.touches[0].clientX+'px'; g.style.top = e.touches[0].clientY+'px';
+});
+
+// Show avatar when typing QQ
+document.getElementById('qqInput').addEventListener('input', function() {
+  const qq = this.value.trim();
+  const wrap = document.getElementById('loginAvatar');
+  if (qq.length >= 5) {
+    document.getElementById('loginAvatarImg').src = 'https://itapi.top/api/qq?qq='+qq;
+    wrap.classList.add('show');
+    document.getElementById('avatarHint').textContent = 'QQ: ' + qq;
+  } else {
+    wrap.classList.remove('show');
+    document.getElementById('avatarHint').textContent = '输入QQ号自动显示头像';
+  }
+});
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.opacity = 1;
+  setTimeout(()=>t.style.opacity=0, 2000);
+}
+
+function getUsers() { return JSON.parse(localStorage.getItem('hb_users')||'{}'); }
+
+function doRegister() {
+  const qq = document.getElementById('qqInput').value.trim();
+  const pwd = document.getElementById('pwdInput').value.trim();
+  if (qq.length<5) return toast('QQ号至少5位');
+  if (pwd.length<4) return toast('密码至少4位');
+  const users = getUsers();
+  if (users[qq]) return toast('该QQ已注册');
+  users[qq] = pwd;
+  localStorage.setItem('hb_users', JSON.stringify(users));
+  toast('注册成功，请登录');
+}
+
+function doLogin() {
+  const qq = document.getElementById('qqInput').value.trim();
+  const pwd = document.getElementById('pwdInput').value.trim();
+  const users = getUsers();
+  if (!users[qq]) return toast('账号未注册');
+  if (users[qq]!==pwd) return toast('密码错误');
+  localStorage.setItem('hb_login', qq);
+  showMain(qq);
+}
+
+function showMain(qq) {
+  myQQ = qq;
+  document.getElementById('loginCard').classList.add('hidden');
+  document.getElementById('loginAvatar').classList.remove('show');
+  document.getElementById('avatarHint').classList.add('hidden');
+  document.getElementById('mainPanel').classList.remove('hidden');
+  document.getElementById('qqLabel').textContent = 'QQ: ' + qq;
+  document.getElementById('mainAvatar').src = 'https://itapi.top/api/qq?qq='+qq;
+  renderChat();
+}
+
+function doLogout() {
+  localStorage.removeItem('hb_login');
+  location.reload();
+}
+
+function downloadHb() {
+  toast('开始下载 HB插件 v2.1.2...');
+  fetch(APK_URL).then(r=>r.blob()).then(blob=>{
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'HBPlugin_v2.1.2.apk';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }).catch(()=>window.open(APK_URL,'_blank'));
+}
+
+// Chat
+function getMsgs() { return JSON.parse(localStorage.getItem('hb_chat')||'[]'); }
+function renderChat() {
+  const box = document.getElementById('chatBox');
+  const msgs = getMsgs();
+  box.innerHTML = msgs.map(m => `
+    <div class="chat-msg ${m.qq===myQQ?'me':''}">
+      <div class="meta">${m.qq} · ${m.time}</div>
+      <div class="bubble">${escapeHtml(m.text)}</div>
+    </div>`).join('');
+  box.scrollTop = box.scrollHeight;
+}
+function sendMsg() {
+  const inp = document.getElementById('chatInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  const msgs = getMsgs();
+  const now = new Date();
+  const time = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  msgs.push({qq:myQQ, text, time});
+  if (msgs.length>200) msgs.shift();
+  localStorage.setItem('hb_chat', JSON.stringify(msgs));
+  inp.value = '';
+  renderChat();
+}
+document.getElementById('chatInput').addEventListener('keydown', e=>{
+  if (e.key==='Enter') sendMsg();
+});
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// Auto login
+const saved = localStorage.getItem('hb_login');
+if (saved) showMain(saved);
+</script>
+</body>
+</html>
